@@ -13,6 +13,3 @@ class ServerHandler:
 
     def process_message(self, uuid, message: Message):
         pass
-
-    def send_message(self, message: Message):
-        pass

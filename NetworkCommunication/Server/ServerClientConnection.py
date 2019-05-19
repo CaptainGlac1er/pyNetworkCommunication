@@ -18,12 +18,12 @@ class ServerClientConnection(StreamRequestHandler):
     def setup(self):
         StreamRequestHandler.setup(self)
         self.handler.add_connection(self)
-        self.message_reader = MessageIO(self.connection, self.message_parser)
+        self.message_reader = MessageIO(self.connection)
 
     def handle(self):
         while True:
             print(f'{"Server: ":>10s} is listening for next message')
-            self.handler.process_message(self.uuid, self.message_reader.read_next_message())
+            self.handler.process_message(self.uuid, self.message_reader.read_next_message(self.message_parser))
 
     def send_message(self, message: Message):
         self.message_reader.send_message(message)

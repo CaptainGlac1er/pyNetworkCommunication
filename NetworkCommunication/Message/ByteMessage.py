@@ -4,7 +4,11 @@ from Message.Message import Message
 class ByteMessage(Message):
     CONTENT_TYPE = 'bytes'
 
-    def __init__(self, content, custom_headers=None, content_type=CONTENT_TYPE, content_encoding=Message.DEFAULT_ENCODING):
+    def __init__(self,
+                 content,
+                 custom_headers=None,
+                 content_type=CONTENT_TYPE,
+                 content_encoding=Message.DEFAULT_ENCODING):
         super().__init__(content, custom_headers, content_type, content_encoding)
 
     def encode_content_as_bytes(self, content, content_encoding):
