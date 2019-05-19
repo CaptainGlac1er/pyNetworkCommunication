@@ -1,18 +1,11 @@
-import json
-import struct
+from Message.Message import Message
 
 
-class ByteMessage:
-    DEFAULT_ENCODING = 'UTF-8'
+class ByteMessage(Message):
     CONTENT_TYPE = 'bytes'
-    HEADER_CONTENT_LENGTH = 'content-length'
-    HEADER_CONTENT_ENCODING = 'content-encoding'
-    HEADER_CONTENT_TYPE = 'content-type'
 
-    def __init__(self, content, content_type=CONTENT_TYPE, content_encoding=DEFAULT_ENCODING):
-        self.content = content
-        self.content_type = content_type
-        self.content_encoding = content_encoding
+    def __init__(self, content, custom_headers=None, content_type=CONTENT_TYPE, content_encoding=Message.DEFAULT_ENCODING):
+        super().__init__(content, custom_headers, content_type, content_encoding)
 
     def encode_content_as_bytes(self, content, content_encoding):
         return content
@@ -21,19 +14,5 @@ class ByteMessage:
         return content
 
     @staticmethod
-    def decode_message(content, content_encoding):
-        return ByteMessage(content, content_encoding=content_encoding)
-
-    def to_bytes(self):
-        content_bytes = self.encode_content_as_bytes(self.content, self.content_encoding)
-        headers = {
-            ByteMessage.HEADER_CONTENT_LENGTH: len(content_bytes),
-            ByteMessage.HEADER_CONTENT_TYPE: self.content_type,
-            ByteMessage.HEADER_CONTENT_ENCODING: self.content_encoding,
-        }
-        header_bytes = json.dumps(headers, ensure_ascii=True).encode(ByteMessage.DEFAULT_ENCODING)
-        message_header = struct.pack(">H", len(header_bytes))
-        return message_header + header_bytes + content_bytes
-
-    def get_content(self):
-        return self.content
+    def decode_message(content, header):
+        return ByteMessage(content, custom_headers=header, content_encoding=header[Message.HEADER_CONTENT_ENCODING])

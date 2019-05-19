@@ -1,18 +1,21 @@
 import json
 import struct
+import socket
 
 from Message.ByteMessage import ByteMessage
+from Message.Message import Message
 from Message.MessageParser import MessageParser
 
 
 class MessageIO:
-    def __init__(self, file, message_parsers: MessageParser):
-        self.file = file
+    def __init__(self, socket_connection: socket, message_parsers: MessageParser):
+        print(socket_connection)
+        self.socket_connection = socket_connection
         self.message_parser = message_parsers
 
     def read_next_message(self) -> ByteMessage:
-        header_length = struct.unpack('>H', self.file.read(2))[0]
-        header = json.loads(self.file.read(header_length).decode(ByteMessage.DEFAULT_ENCODING))
-        content_length = header[ByteMessage.HEADER_CONTENT_LENGTH]
-        content = self.file.read(content_length)
+        header_length = struct.unpack('>H', self.socket_connection.read(2))[0]
+        header = json.loads(self.socket_connection.read(header_length).decode(Message.DEFAULT_ENCODING))
+        content_length = header[Message.HEADER_CONTENT_LENGTH]
+        content = self.socket_connection.read(content_length)
         return self.message_parser.parse(header, content)

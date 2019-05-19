@@ -1,9 +1,10 @@
 from Message.MessageParser import MessageParser
 from Server.ServerClientConnection import ServerClientConnection
+from Server.ServerHandler import ServerHandler
 
 
 class ServerClientConnectionFactory:
-    def __init__(self, message_parsers, router=None):
+    def __init__(self, message_parsers, router: ServerHandler):
         self.router = router
         self.message_parsers = MessageParser(message_parsers)
 

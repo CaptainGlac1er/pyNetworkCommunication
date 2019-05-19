@@ -1,4 +1,5 @@
 from Message.ByteMessage import ByteMessage
+from Message.Message import Message
 
 
 class MessageParser:
@@ -6,5 +7,5 @@ class MessageParser:
         self.parsable_types = {item.CONTENT_TYPE: item for item in message_classes}
 
     def parse(self, header, content):
-        return self.parsable_types[header[ByteMessage.HEADER_CONTENT_TYPE]]\
-            .decode_message(content, header[ByteMessage.HEADER_CONTENT_ENCODING])
+        return self.parsable_types[header[Message.HEADER_CONTENT_TYPE]]\
+            .decode_message(content, headers=header)
