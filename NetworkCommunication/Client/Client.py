@@ -3,6 +3,9 @@ import socket
 from threading import Thread, Lock
 
 from Message.ByteMessage import ByteMessage
+from Message.JsonMessage import JsonMessage
+from Message.MessageIO import MessageIO
+from Message.MessageParser import MessageParser
 
 
 class Client(Thread):
@@ -22,7 +25,6 @@ class Client(Thread):
             sock = socket.create_connection((self.hostname, self.port))
             self.ssock = context.wrap_socket(sock, server_hostname=self.hostname)
             Thread(target=self.server_listener, args=(self.ssock, )).start()
-            print("client ready to send")
 
     def send_message(self, message: ByteMessage):
         with self.socket_lock:
@@ -33,6 +35,13 @@ class Client(Thread):
     def server_listener(self, socket):
         with self.socket_lock:
             pass
+        message_connection = MessageIO(
+            socket_connection=socket,
+            message_parsers=MessageParser([ByteMessage, JsonMessage]))
+        while True:
+            print(f'{"Client:":>10s} is listening for next message')
+            message = message_connection.read_next_message()
+            print(f'{"Client:":>10s} received "{message.get_content()}"')
 
     def close(self):
         self.ssock.close()

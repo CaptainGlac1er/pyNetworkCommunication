@@ -24,7 +24,7 @@ class Message:
         pass
 
     @staticmethod
-    def decode_message(headers, content):
+    def decode_message(content, headers):
         pass
 
     def to_bytes(self):

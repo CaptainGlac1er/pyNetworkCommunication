@@ -14,5 +14,5 @@ class ByteMessage(Message):
         return content
 
     @staticmethod
-    def decode_message(content, header):
-        return ByteMessage(content, custom_headers=header, content_encoding=header[Message.HEADER_CONTENT_ENCODING])
+    def decode_message(content, headers):
+        return ByteMessage(content, custom_headers=headers, content_encoding=headers[Message.HEADER_CONTENT_ENCODING])

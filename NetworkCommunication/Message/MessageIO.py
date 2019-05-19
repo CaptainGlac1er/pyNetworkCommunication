@@ -9,7 +9,6 @@ from Message.MessageParser import MessageParser
 
 class MessageIO:
     def __init__(self, socket_connection: socket, message_parsers: MessageParser):
-        print(socket_connection)
         self.socket_connection = socket_connection
         self.message_parser = message_parsers
 
@@ -19,3 +18,6 @@ class MessageIO:
         content_length = header[Message.HEADER_CONTENT_LENGTH]
         content = self.socket_connection.read(content_length)
         return self.message_parser.parse(header, content)
+
+    def send_message(self, message: Message):
+        self.socket_connection.sendall(message.to_bytes())
