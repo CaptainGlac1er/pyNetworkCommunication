@@ -1,3 +1,5 @@
 .idea
 NetworkCommunication.iml
 testing
+build
+dist
