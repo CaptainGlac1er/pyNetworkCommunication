@@ -11,8 +11,9 @@ class Server(ThreadingMixIn, TCPServer, Thread):
     def __init__(self,
                  server_address,
                  router,
-                 certificate_file,
-                 certificate_key_file,
+                 secure_connection=True,
+                 certificate_file=None,
+                 certificate_key_file=None,
                  ssl_version=ssl.PROTOCOL_TLS_SERVER,
                  ca_certs=None,
                  bind_and_activate=True,
@@ -30,17 +31,19 @@ class Server(ThreadingMixIn, TCPServer, Thread):
         self.certificate_file = certificate_file
         self.certificate_key_file = certificate_key_file
         self.ca_certs = ca_certs
+        self.secure_connection = secure_connection
 
     def get_request(self):
         new_socket, from_address = self.socket.accept()
-        connection_stream = None
+        connection_stream = new_socket
         try:
-            connection_stream = ssl.wrap_socket(sock=new_socket,
-                                                server_side=True,
-                                                certfile=self.certificate_file,
-                                                keyfile=self.certificate_key_file,
-                                                ssl_version=self.ssl_version,
-                                                ca_certs=self.ca_certs)
+            if self.secure_connection:
+                connection_stream = ssl.wrap_socket(sock=new_socket,
+                                                    server_side=True,
+                                                    certfile=self.certificate_file,
+                                                    keyfile=self.certificate_key_file,
+                                                    ssl_version=self.ssl_version,
+                                                    ca_certs=self.ca_certs)
         except ValueError:
             print("Server: ", "error -> ", ValueError)
         return connection_stream, from_address
