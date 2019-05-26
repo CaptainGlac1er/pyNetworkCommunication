@@ -2,9 +2,8 @@ import uuid
 from socketserver import StreamRequestHandler
 from typing import Optional
 
-from Message.Message import Message
-from Message.MessageIO import MessageIO
-from Server.ServerHandler import ServerHandler
+from Message import Message, MessageIO
+from Server import ServerHandler
 
 
 class ServerClientConnection(StreamRequestHandler):

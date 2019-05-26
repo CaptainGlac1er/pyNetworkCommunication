@@ -1,3 +1,3 @@
-from NetworkCommunication.Server import Server
-from NetworkCommunication.Server import ServerClientConnection
-from NetworkCommunication.Server import ServerHandler
+import NetworkCommunication.Server.Server
+import NetworkCommunication.Server.ServerClientConnection
+import NetworkCommunication.Server.ServerHandler

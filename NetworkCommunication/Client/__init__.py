@@ -1,2 +1,2 @@
-from NetworkCommunication.Client import Client
-from NetworkCommunication.Client import ClientHandler
+import NetworkCommunication.Client.Client
+import NetworkCommunication.Client.ClientHandler

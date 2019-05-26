@@ -3,11 +3,8 @@ import socket
 from threading import Thread
 from typing import Optional
 
-from Client.ClientHandler import ClientHandler
-from Message.ByteMessage import ByteMessage
-from Message.JsonMessage import JsonMessage
-from Message.MessageIO import MessageIO
-from Message.MessageParser import MessageParser
+from Client import ClientHandler
+from Message import ByteMessage, JsonMessage, MessageIO, MessageParser
 
 
 class Client(object):
