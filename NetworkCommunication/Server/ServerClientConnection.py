@@ -1,3 +1,5 @@
+import logging
+import threading
 import uuid
 from socketserver import StreamRequestHandler
 from typing import Optional
@@ -12,19 +14,29 @@ class ServerClientConnection(StreamRequestHandler):
         self.uuid = uuid.uuid4()
         self.handler = handler
         self.message_parser = message_parser
+        self.connection_lock = threading.Lock()
         StreamRequestHandler.__init__(self, request, client_address, server)
 
     def setup(self):
         StreamRequestHandler.setup(self)
         self.handler.add_connection(self)
-        self.message_reader = MessageIO(self.connection)
+        self.message_reader = MessageIO(self.connection, self.connection_lock)
+        logging.debug(f'{"Server: ":>10s} client {self.uuid} connected')
 
     def handle(self):
         while True:
-            print(f'{"Server: ":>10s} is listening for next message')
-            self.handler.process_message(self.uuid, self.message_reader.read_next_message(self.message_parser))
+            message_received = self.message_reader.read_next_message(self.message_parser)
+            if message_received:
+                logging.debug((f'{"Server: ":>10s} received message {message_received.get_hash()}'
+                               f' from {self.uuid}'))
+                self.handler.process_message(self.uuid, message_received)
+            else:
+                self.handler.remove_connection(self)
+                break
 
     def send_message(self, message: Message):
+        logging.debug((f'{"Server: ":>10s} sending message {message.get_hash()}'
+                       f' to {self.uuid}'))
         self.message_reader.send_message(message)
 
     def get_uuid(self):

@@ -17,6 +17,6 @@ class JsonMessage(ByteMessage):
         content = json.loads(data, encoding=content_encoding)
         return JsonMessage(content, custom_headers=headers, encoding=content_encoding)
 
-    def encode_content_as_bytes(self, content, content_encoding):
-        return json.dumps(content, ensure_ascii=True).\
-            encode(encoding=content_encoding)
+    def encode_content_as_bytes(self):
+        return json.dumps(self.content, ensure_ascii=True).\
+            encode(encoding=self.content_encoding)

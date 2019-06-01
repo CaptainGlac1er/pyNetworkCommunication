@@ -11,8 +11,8 @@ class ByteMessage(Message):
                  content_encoding=Message.DEFAULT_ENCODING):
         super().__init__(content, custom_headers, content_type, content_encoding)
 
-    def encode_content_as_bytes(self, content, content_encoding):
-        return content
+    def encode_content_as_bytes(self):
+        return self.content
 
     def decode_content(self, content, content_encoding):
         return content

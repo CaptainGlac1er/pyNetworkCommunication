@@ -11,5 +11,8 @@ class ClientHandler:
     def set_connection(self, connection: Client):
         self.connection = connection
 
+    def connection_closed(self, connection: Client):
+        pass
+
     def process_message(self, message: Message):
         pass

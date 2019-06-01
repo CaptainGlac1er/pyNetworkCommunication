@@ -1,3 +1,5 @@
+import threading
+import logging
 from uuid import UUID
 
 from Message.Message import Message
@@ -7,9 +9,19 @@ from Server import ServerClientConnection
 class ServerHandler:
     def __init__(self):
         self.connections: {UUID: ServerClientConnection} = {}
+        self.connections_lock: threading.Lock = threading.Lock()
 
     def add_connection(self, connection: ServerClientConnection):
-        pass
+        with self.connections_lock:
+            logging.info(f'{"Server: ":>10s} client {connection.get_uuid()} connected')
+            self.connections[connection.get_uuid()] = connection
+            logging.debug(f'{"Server: ":>10s} has now {len(self.connections)} connections')
+
+    def remove_connection(self, connection: ServerClientConnection):
+        with self.connections_lock:
+            logging.info(f'{"Server: ":>10s} client {connection.get_uuid()} disconnected')
+            del self.connections[connection.get_uuid()]
+            logging.debug(f'{"Server: ":>10s} has now {len(self.connections)} connections')
 
     def process_message(self, uuid, message: Message):
         pass
