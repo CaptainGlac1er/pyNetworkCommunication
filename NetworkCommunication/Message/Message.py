@@ -47,4 +47,4 @@ class Message:
         return self.content
 
     def get_hash(self):
-        return hashlib.sha3_512(self.to_bytes()).hexdigest()
+        return hashlib.sha3_512(self.encode_content_as_bytes()).hexdigest()
