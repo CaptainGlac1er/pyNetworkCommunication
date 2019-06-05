@@ -1,5 +1,5 @@
 import logging
-import threading
+import socket
 import uuid
 from socketserver import StreamRequestHandler
 from typing import Optional
@@ -14,14 +14,12 @@ class ServerClientConnection(StreamRequestHandler):
         self.uuid = uuid.uuid4()
         self.handler = handler
         self.message_parser = message_parser
-        self.connection_lock = threading.Lock()
         StreamRequestHandler.__init__(self, request, client_address, server)
 
     def setup(self):
         StreamRequestHandler.setup(self)
         self.handler.add_connection(self)
-        self.message_reader = MessageIO(self.connection, self.connection_lock)
-        logging.debug(f'{"Server: ":>10s} client {self.uuid} connected')
+        self.message_reader = MessageIO(self.connection)
 
     def handle(self):
         while True:
@@ -33,6 +31,10 @@ class ServerClientConnection(StreamRequestHandler):
             else:
                 self.handler.remove_connection(self)
                 break
+
+    def close_connection(self):
+        if self.connection is not None:
+            self.connection.shutdown(socket.SHUT_RDWR)
 
     def send_message(self, message: Message):
         logging.debug((f'{"Server: ":>10s} sending message {message.get_hash()}'

@@ -20,7 +20,10 @@ class ServerHandler:
     def remove_connection(self, connection: ServerClientConnection):
         with self.connections_lock:
             logging.info(f'{"Server: ":>10s} client {connection.get_uuid()} disconnected')
-            del self.connections[connection.get_uuid()]
+            connection.close_connection()
+            if connection.get_uuid() in self.connections:
+                del self.connections[connection.get_uuid()]
+            print(self.connections)
             logging.debug(f'{"Server: ":>10s} has now {len(self.connections)} connections')
 
     def process_message(self, uuid, message: Message):
