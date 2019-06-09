@@ -32,14 +32,7 @@ class Client(Thread):
         self.message_queue: [Message] = []
 
     def run(self):
-        while not self.connection_closed:
-            with self.connection_state_lock:
-                if not self.connection_closed and not self.connection_open:
-                    if self.connect():
-                        break
-            if not self.connection_open:
-                time.sleep(self.reconnect_delay)
-                logging.warning(f'{"Client: ":>10s} Retrying server')
+        self.connect()
         if self.connection_open:
             logging.info(f'{"Client: ":>10s} connected to server')
             logging.info(f'{"Client: ":>10s} starting client services')
@@ -48,25 +41,36 @@ class Client(Thread):
         else:
             logging.warning(f'{"Client: ":>10s} did not connect')
 
+    def reconnect(self):
+        self.connection_closed = False
+        self.connection_open = False
+        self.run()
 
     def connect(self):
-        self.connection_open = False
         logging.info(f'{"Client: ":>10s} Trying connecting to server')
-        try:
-            sock = socket.create_connection((self.hostname, self.port))
-            logging.info(sock)
-            if self.secure_connection:
-                context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
-                context.load_verify_locations(self.ca_cert)
-                self.connection = context.wrap_socket(sock, server_hostname=self.hostname)
-            else:
-                self.connection = sock
-            self.client_handler.set_connection(self.connection)
-            self.message_io = MessageIO(self.connection)
-            self.connection_open = True
-        except ConnectionRefusedError as e:
-            return False
-        return True
+        while not self.connection_closed:
+            with self.connection_state_lock:
+                if not self.connection_closed and not self.connection_open:
+                    self.connection_open = False
+                    logging.info(f'{"Client: ":>10s} Connection Try')
+                    try:
+                        sock = socket.create_connection((self.hostname, self.port))
+                        logging.debug(
+                            f'{"Client: ":>10s} connection made to {sock.getsockname()[0]} on {sock.getsockname()[1]}')
+                        if self.secure_connection:
+                            context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+                            context.load_verify_locations(self.ca_cert)
+                            self.connection = context.wrap_socket(sock, server_hostname=self.hostname)
+                        else:
+                            self.connection = sock
+                        self.client_handler.set_connection(self.connection)
+                        self.message_io = MessageIO(self.connection)
+                        self.connection_open = True
+                    except ConnectionRefusedError as e:
+                        time.sleep(self.reconnect_delay)
+                        logging.warning(f'{"Client: ":>10s} Retrying server')
+                        continue
+                    break
 
     def start_message_sender(self):
         if self.client_sender_thread is None or not self.client_sender_thread.is_alive():
@@ -94,7 +98,10 @@ class Client(Thread):
                 logging.debug(f'{"Client: ":>10s} received message {message_received.get_hash()}')
                 self.client_handler.process_message(message_received)
             else:
-                self.client_handler.connection_closed(self)
+                logging.error(f'{"Client: ":>10s} connection died')
+                self.connection_open = False
+                self.connection.close()
+                self.client_handler.connection_closed(self, message_received is None)
                 break
 
     def message_sender(self):
@@ -104,11 +111,11 @@ class Client(Thread):
             if not self.message_io.send_message(message_to_send):
                 self.message_queue.append(message_to_send)
                 logging.debug(f'{"Client: ":>10s} message failed to send, queued {message_to_send.get_hash()}')
-                self.connect()
+                self.client_handler.connection_closed(self, True)
             logging.debug(f'{"Client: ":>10s} message sent')
 
     def close(self):
         with self.connection_state_lock:
             self.connection_closed = True
             if self.connection is not None:
-                self.connection.shutdown(socket.SHUT_RDWR)
+                self.connection.close()

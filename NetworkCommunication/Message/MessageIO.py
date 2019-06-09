@@ -1,7 +1,7 @@
 import json
 import struct
 import socket
-from typing import Optional
+from typing import Optional, Union
 
 from Message.ByteMessage import ByteMessage
 from Message.Message import Message
@@ -14,13 +14,13 @@ class MessageIO:
     def __init__(self, socket_connection: socket):
         self.socket_connection: socket = socket_connection
 
-    def read_next_message(self, message_parsers: MessageParser) -> Optional[ByteMessage]:
+    def read_next_message(self, message_parsers: MessageParser) -> Optional[Union[ByteMessage, bool]]:
         try:
             data = self.socket_connection.recv(2)
         except Exception as e:
             return None
         if not data:
-            return None
+            return False
         header_length = struct.unpack('>H', data)[0]
         header = json.loads(self.socket_connection.recv(header_length).decode(Message.DEFAULT_ENCODING))
         content_length = header[Message.HEADER_CONTENT_LENGTH]

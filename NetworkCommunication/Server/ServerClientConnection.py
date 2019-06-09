@@ -35,6 +35,7 @@ class ServerClientConnection(StreamRequestHandler):
     def close_connection(self):
         if self.connection is not None:
             self.connection.shutdown(socket.SHUT_RDWR)
+            self.connection.close()
 
     def send_message(self, message: Message):
         logging.debug((f'{"Server: ":>10s} sending message {message.get_hash()}'

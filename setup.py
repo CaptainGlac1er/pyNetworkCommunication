@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="py-network-communication",
-    version="0.1.0.dev1",
+    version="0.2.0.dev1",
     author="GlacierByte",
     description="Socket Message Communicator",
     long_description=long_description,
