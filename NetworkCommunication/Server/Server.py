@@ -51,3 +51,7 @@ class Server(ThreadingMixIn, TCPServer, Thread):
     def run(self):
         print('Server running')
         self.serve_forever()
+
+    def stop(self):
+        self.shutdown()
+        self.server_close()
