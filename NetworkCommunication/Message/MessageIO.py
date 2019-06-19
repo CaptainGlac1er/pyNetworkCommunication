@@ -1,4 +1,5 @@
 import json
+import logging
 import struct
 import socket
 from typing import Optional, Union
@@ -22,7 +23,9 @@ class MessageIO:
         if not data:
             return False
         header_length = struct.unpack('>H', data)[0]
-        header = json.loads(self.socket_connection.recv(header_length).decode(Message.DEFAULT_ENCODING))
+        data_received = self.socket_connection.recv(header_length)
+        logging.debug(data_received)
+        header = json.loads(data_received.decode(Message.DEFAULT_ENCODING))
         content_length = header[Message.HEADER_CONTENT_LENGTH]
         b_content = []
         data_transferred = 0

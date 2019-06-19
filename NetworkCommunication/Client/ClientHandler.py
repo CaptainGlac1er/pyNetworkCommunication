@@ -1,3 +1,4 @@
+import logging
 from typing import Optional
 
 from Client import Client
@@ -12,7 +13,12 @@ class ClientHandler:
         self.connection = connection
 
     def connection_closed(self, connection: Client, died: bool):
-        pass
+        if died and connection.is_connection_open():
+            logging.info('connection died')
+            connection.reconnect()
+        else:
+            logging.info('connection closed')
+            connection.close()
 
     def process_message(self, message: Message):
         pass
