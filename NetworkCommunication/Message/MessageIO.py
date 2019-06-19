@@ -2,6 +2,7 @@ import json
 import logging
 import struct
 import socket
+import threading
 from typing import Optional, Union
 
 from Message.ByteMessage import ByteMessage
@@ -14,6 +15,7 @@ class MessageIO:
 
     def __init__(self, socket_connection: socket):
         self.socket_connection: socket = socket_connection
+        self.socket_lock: threading.Lock = threading.Lock()
 
     def read_next_message(self, message_parsers: MessageParser) -> Optional[Union[ByteMessage, bool]]:
         try:
@@ -37,7 +39,8 @@ class MessageIO:
 
     def send_message(self, message: Message) -> bool:
         try:
-            self.socket_connection.sendall(message.to_bytes())
+            with self.socket_lock:
+                self.socket_connection.sendall(message.to_bytes())
             return True
         except Exception as e:
             return False
