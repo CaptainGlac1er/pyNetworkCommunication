@@ -26,9 +26,13 @@ class ServerHandler:
             print(self.connections)
             logging.debug(f'{"Server: ":>10s} has now {len(self.connections)} connections')
 
-    def get_connections(self):
+    def close_connections(self):
         with self.connections_lock:
-            return list(self.connections.items())
+            for key, connection in self.get_connections():
+                connection.close_connection()
+
+    def get_connections(self):
+        return list(self.connections.items())
 
     def process_message(self, uuid, message: Message):
         pass

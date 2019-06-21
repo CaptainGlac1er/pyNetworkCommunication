@@ -5,12 +5,13 @@ from threading import Thread
 from Message.ByteMessage import ByteMessage
 from Message.JsonMessage import JsonMessage
 from Server.ServerClientConnectionFactory import ServerClientConnectionFactory
+from Server.ServerHandler import ServerHandler
 
 
 class Server(ThreadingMixIn, TCPServer, Thread):
     def __init__(self,
                  server_address,
-                 router,
+                 router: ServerHandler,
                  secure_connection=True,
                  certificate_file=None,
                  certificate_key_file=None,
@@ -32,6 +33,7 @@ class Server(ThreadingMixIn, TCPServer, Thread):
         self.certificate_key_file = certificate_key_file
         self.ca_certs = ca_certs
         self.secure_connection = secure_connection
+        self.router = router
 
     def get_request(self):
         new_socket, from_address = self.socket.accept()
@@ -49,9 +51,12 @@ class Server(ThreadingMixIn, TCPServer, Thread):
         return connection_stream, from_address
 
     def run(self):
-        print('Server running')
-        self.serve_forever()
+        try:
+            self.serve_forever()
+        finally:
+            self.router.close_connections()
 
     def stop(self):
+        self.router.close_connections()
         self.shutdown()
         self.server_close()

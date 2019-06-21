@@ -107,6 +107,7 @@ class Client(Thread):
                 self.connection.close()
                 self.client_handler.connection_closed(self, message_received is None)
                 break
+        logging.info(f'{"Client: ":>10s} Stop listening for messages')
 
     def message_sender(self):
         while self.is_connection_alive() and len(self.message_queue) > 0:
@@ -117,6 +118,7 @@ class Client(Thread):
                 logging.debug(f'{"Client: ":>10s} message failed to send, queued {message_to_send.get_hash()}')
                 self.client_handler.connection_closed(self, True)
             logging.debug(f'{"Client: ":>10s} message sent')
+        logging.info(f'{"Client: ":>10s} Stop sending messages')
 
     def close(self):
         logging.info(f'{"Client: ":>10s} closing connection')
