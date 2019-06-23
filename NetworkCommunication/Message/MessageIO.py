@@ -12,6 +12,7 @@ from Message.MessageParser import MessageParser
 
 class MessageIO:
     MAX_DATA_READ = 1024
+    TIMEOUT = 5
 
     def __init__(self, socket_connection: socket):
         self.socket_connection: socket = socket_connection
@@ -25,16 +26,29 @@ class MessageIO:
         if not data:
             return False
         header_length = struct.unpack('>H', data)[0]
-        data_received = self.socket_connection.recv(header_length)
+        data_received = b''
+        try:
+            while len(data_received) < header_length:
+                self.socket_connection.settimeout(self.TIMEOUT)
+                read_count = min(header_length - len(data_received), self.MAX_DATA_READ)
+                data_received += self.socket_connection.recv(read_count)
+                self.socket_connection.settimeout(None)
+        except socket.timeout as e:
+            logging.error(f'{"MessageIO: ":>10s} message header timed out')
+            return False
         logging.debug(data_received)
         header = json.loads(data_received.decode(Message.DEFAULT_ENCODING))
         content_length = header[Message.HEADER_CONTENT_LENGTH]
-        b_content = []
-        data_transferred = 0
-        while data_transferred < content_length:
-            b_content.append(self.socket_connection.recv(min(content_length - data_transferred, self.MAX_DATA_READ)))
-            data_transferred += len(b_content[-1])
-        content = b''.join(b_content)
+        content = b''
+        try:
+            while len(content) < content_length:
+                self.socket_connection.settimeout(self.TIMEOUT)
+                read_count = min(content_length - len(content), self.MAX_DATA_READ)
+                content += self.socket_connection.recv(read_count)
+                self.socket_connection.settimeout(None)
+        except socket.timeout as e:
+            logging.error(f'{"MessageIO: ":>10s} message content timed out')
+            return False
         return message_parsers.parse(header, content)
 
     def send_message(self, message: Message) -> bool:
