@@ -1,3 +1,4 @@
+import io
 import json
 import logging
 import struct
@@ -11,7 +12,7 @@ from Message.MessageParser import MessageParser
 
 
 class MessageIO:
-    MAX_DATA_READ = 1024
+    MAX_DATA_READ = 1000000
     TIMEOUT = 5
 
     def __init__(self, socket_connection: socket):
@@ -26,35 +27,51 @@ class MessageIO:
         if not data:
             return False
         header_length = struct.unpack('>H', data)[0]
-        data_received = b''
+        data_received_len = 0
         try:
-            while len(data_received) < header_length:
-                self.socket_connection.settimeout(self.TIMEOUT)
-                read_count = min(header_length - len(data_received), self.MAX_DATA_READ)
-                data_received += self.socket_connection.recv(read_count)
-                self.socket_connection.settimeout(None)
+            received = io.BytesIO()
+            self.socket_connection.settimeout(self.TIMEOUT)
+            while data_received_len < header_length:
+                read_count = min(header_length - data_received_len, self.MAX_DATA_READ)
+                packet = self.socket_connection.recv(read_count)
+                received.write(packet)
+                data_received_len += len(packet)
+            data_received = received.getbuffer().tobytes()
+            received.close()
+            self.socket_connection.settimeout(None)
         except socket.timeout as e:
             logging.error(f'{"MessageIO: ":>10s} message header timed out')
             return False
         logging.debug(data_received)
         header = json.loads(data_received.decode(Message.DEFAULT_ENCODING))
         content_length = header[Message.HEADER_CONTENT_LENGTH]
-        content = b''
+        data_received_len = 0
         try:
-            while len(content) < content_length:
-                self.socket_connection.settimeout(self.TIMEOUT)
-                read_count = min(content_length - len(content), self.MAX_DATA_READ)
-                content += self.socket_connection.recv(read_count)
-                self.socket_connection.settimeout(None)
+            received = io.BytesIO()
+            self.socket_connection.settimeout(self.TIMEOUT)
+            while data_received_len < content_length:
+                read_count = min(content_length - data_received_len, self.MAX_DATA_READ)
+                packet = self.socket_connection.recv(read_count)
+                received.write(packet)
+                data_received_len += len(packet)
+            content = received.getbuffer().tobytes()
+            received.close()
+            self.socket_connection.settimeout(None)
         except socket.timeout as e:
             logging.error(f'{"MessageIO: ":>10s} message content timed out')
             return False
         return message_parsers.parse(header, content)
 
-    def send_message(self, message: Message) -> bool:
+    def send_message(self, message: Message, delay=0) -> bool:
         try:
             with self.socket_lock:
-                self.socket_connection.sendall(message.to_bytes())
+                message_bytes = message.to_bytes()
+                data_size = len(message_bytes)
+                data_sent = 0
+                while data_sent < data_size:
+                    send_count = min(data_size - data_sent, self.MAX_DATA_READ)
+                    self.socket_connection.send(message_bytes[data_sent:data_sent+send_count])
+                    data_sent += send_count
             return True
         except Exception as e:
             return False
